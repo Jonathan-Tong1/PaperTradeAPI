@@ -19,8 +19,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CryptoWalletServiceImpl implements CryptoWalletService {
@@ -33,6 +36,43 @@ public class CryptoWalletServiceImpl implements CryptoWalletService {
 
     @Autowired
     private FlatWalletRepository flatWalletRepository;
+
+    @Override
+    public ResponseEntity<Map<String, Object>> getCryptoAssetsSummary(String username) {
+        try {
+            // Fetch crypto wallet data for the user
+            List<CryptoWallet> cryptoWallets = cryptoWalletRepository.findAllByOwnerUsername(username);
+
+            // Prepare response summary
+            BigDecimal totalCoins = cryptoWallets.stream()
+                    .map(CryptoWallet::getNumOfCoins)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            List<Map<String, Object>> assets = cryptoWallets.stream()
+                    .map(wallet -> {
+                        Map<String, Object> assetMap = new HashMap<>();
+                        assetMap.put("coinName", wallet.getCoinName());
+                        assetMap.put("ticker", wallet.getCoinTickerSymbol());
+                        assetMap.put("amount", wallet.getNumOfCoins());
+                        return assetMap;
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = Map.of(
+                    "username", username,
+                    "totalCoins", totalCoins,
+                    "assets", assets
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // Log the error (you can replace this with logging logic)
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An error occurred while retrieving crypto asset summary."));
+        }
+    }
 
     @Override
     public ResponseEntity<String> getCoinInfo(String coinId) {

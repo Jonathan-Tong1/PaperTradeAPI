@@ -25,6 +25,7 @@ public class AssetSummaryController {
 
     @Autowired
     private CryptoWalletService cryptoWalletService;
+
     @Autowired
     private StockTradeWalletService stockTradeWalletService;
 
@@ -36,39 +37,8 @@ public class AssetSummaryController {
 
         String username = userDetails.getUsername();
 
-        try {
-            // Fetch crypto wallet data for the user
-            List<CryptoWallet> cryptoWallets = cryptoWalletService.getCryptoAssetsByUser(username);
+        return cryptoWalletService.getCryptoAssetsSummary(username);
 
-            // Prepare response summary
-            BigDecimal totalCoins = cryptoWallets.stream()
-                    .map(CryptoWallet::getNumOfCoins)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            List<Map<String, Object>> assets = cryptoWallets.stream()
-                    .map(wallet -> {
-                        Map<String, Object> assetMap = new HashMap<>();
-                        assetMap.put("coinName", wallet.getCoinName());
-                        assetMap.put("ticker", wallet.getCoinTickerSymbol());
-                        assetMap.put("amount", wallet.getNumOfCoins());
-                        return assetMap;
-                    })
-                    .collect(Collectors.toList());
-
-            Map<String, Object> response = Map.of(
-                    "username", username,
-                    "totalCoins", totalCoins,
-                    "assets", assets
-            );
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            // Log the error (you can replace this with logging logic)
-            e.printStackTrace();
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "An error occurred while retrieving crypto asset summary."));
-        }
     }
 
     @GetMapping("/stockwallet")
@@ -78,41 +48,9 @@ public class AssetSummaryController {
         }
 
         String username = userDetails.getUsername();
+        return stockTradeWalletService.getTradingWalletSummary(username);
 
-        try {
-            // Fetch stock wallet data for the user
-            List<StockWallet> stockWallets = stockTradeWalletService.getStockAssetsByUser(username);
 
-            // Calculate total number of stocks
-            BigDecimal totalNumberOfStocks = stockWallets.stream()
-                    .map(StockWallet::getNumShares)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            // Create list of assets
-            List<Map<String, Object>> assets = stockWallets.stream()
-                    .map(wallet -> {
-                        Map<String, Object> assetMap = new HashMap<>();
-                        assetMap.put("stockSymbol", wallet.getStockSymbol());
-                        assetMap.put("numShares", wallet.getNumShares());
-                        return assetMap;
-                    })
-                    .collect(Collectors.toList());
-
-            // Prepare response map
-            Map<String, Object> response = Map.of(
-                    "username", username,
-                    "totalNumberOfStocks", totalNumberOfStocks,
-                    "assets", assets
-            );
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            // Log the error
-            e.printStackTrace();
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "An error occurred while retrieving trading wallet summary."));
-        }
     }
 
 }

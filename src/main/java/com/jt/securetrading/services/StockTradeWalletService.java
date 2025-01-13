@@ -5,9 +5,12 @@ import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 public interface StockTradeWalletService {
 
+
+    ResponseEntity<Map<String, Object>> getTradingWalletSummary(String username);
 
     List<StockWallet> getStockAssetsByUser(String username);
 
