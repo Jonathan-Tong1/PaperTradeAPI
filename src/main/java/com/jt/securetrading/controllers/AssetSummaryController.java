@@ -1,7 +1,9 @@
 package com.jt.securetrading.controllers;
 
 import com.jt.securetrading.models.wallets.CryptoWallet;
+import com.jt.securetrading.models.wallets.StockWallet;
 import com.jt.securetrading.services.CryptoWalletService;
+import com.jt.securetrading.services.StockTradeWalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,8 @@ public class AssetSummaryController {
 
     @Autowired
     private CryptoWalletService cryptoWalletService;
+    @Autowired
+    private StockTradeWalletService stockTradeWalletService;
 
     @GetMapping("/cryptowallet")
     public ResponseEntity<Map<String, Object>> getCryptoAssetsSummary(@AuthenticationPrincipal UserDetails userDetails) {
@@ -67,5 +71,48 @@ public class AssetSummaryController {
         }
     }
 
+    @GetMapping("/stockwallet")
+    public ResponseEntity<Map<String, Object>> getTradingWalletSummary(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "User details are missing."));
+        }
+
+        String username = userDetails.getUsername();
+
+        try {
+            // Fetch stock wallet data for the user
+            List<StockWallet> stockWallets = stockTradeWalletService.getStockAssetsByUser(username);
+
+            // Calculate total number of stocks
+            BigDecimal totalNumberOfStocks = stockWallets.stream()
+                    .map(StockWallet::getNumShares)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // Create list of assets
+            List<Map<String, Object>> assets = stockWallets.stream()
+                    .map(wallet -> {
+                        Map<String, Object> assetMap = new HashMap<>();
+                        assetMap.put("stockSymbol", wallet.getStockSymbol());
+                        assetMap.put("numShares", wallet.getNumShares());
+                        return assetMap;
+                    })
+                    .collect(Collectors.toList());
+
+            // Prepare response map
+            Map<String, Object> response = Map.of(
+                    "username", username,
+                    "totalNumberOfStocks", totalNumberOfStocks,
+                    "assets", assets
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // Log the error
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An error occurred while retrieving trading wallet summary."));
+        }
+    }
 
 }

@@ -2,6 +2,7 @@ package com.jt.securetrading.services.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jt.securetrading.models.wallets.CryptoWallet;
 import com.jt.securetrading.models.wallets.FlatWallet;
 import com.jt.securetrading.models.wallets.StockWallet;
 import com.jt.securetrading.repositories.FlatWalletRepository;
@@ -19,6 +20,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -37,6 +39,12 @@ public class StockTradeWalletServiceImpl implements StockTradeWalletService {
 
     @Autowired
     private StockWalletRepository stockWalletRepository;
+
+    @Override
+    public List<StockWallet> getStockAssetsByUser(String username) {
+        // Query the repository for wallets associated with the username
+        return stockWalletRepository.findAllByOwnerUsername(username);
+    }
 
     @Override
     public ResponseEntity<String> buyStock(String stockSymbol, BigDecimal numShares, String ownerUsername) {
