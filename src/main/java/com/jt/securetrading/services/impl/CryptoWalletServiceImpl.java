@@ -19,6 +19,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -197,5 +198,11 @@ public class CryptoWalletServiceImpl implements CryptoWalletService {
 
         // Step 9: Return success response
         return ResponseEntity.ok("Successfully sold " + numCoinsToSell + " " + coinName + " for $" + totalUsdToCredit);
+    }
+
+    @Override
+    public List<CryptoWallet> getCryptoAssetsByUser(String username) {
+        // Query the repository for wallets associated with the username
+        return cryptoWalletRepository.findAllByOwnerUsername(username);
     }
 }
